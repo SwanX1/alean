@@ -1,36 +1,39 @@
 // Copyright (c) 2022 Kārlis Čerņavskis, licensed under GNU AGPL v3.0
-#![feature(core_intrinsics)]
 #![no_main]
 #![no_std]
+#![feature(exclusive_range_pattern)]
 
-use core::intrinsics::{volatile_load, volatile_store};
+mod peripheral;
+mod util;
+
+use core::arch::asm;
 use core::panic::PanicInfo;
 
-mod constants;
-mod util;
+use peripheral::drivers::gpio;
+use peripheral::drivers::gpio::constants::PinFunction;
 
 #[no_mangle]
 pub extern "C" fn kernel_main() -> ! {
+  let pin = 47;
   unsafe {
     // Set pin 47 to output
     // FSEL_4 handles pins 40-49, pin 47 uses bits 21-23.
     // Enabling the first bit (21st bit in the actual value) sets the pin function to output.
-    let mut ra: u32;
-    ra = volatile_load(constants::FSEL_4);
-    ra = (ra & !(7 << 21)) | (1 << 21);
-    volatile_store(constants::FSEL_4, ra);
+    gpio::pin_function_set(pin, PinFunction::OUTPUT);
 
     loop {
-      // Set pin 15 to HIGH
-      // PSET_1 handles pins 32-53, we set bit 15 to 1 to set this pin.
-      volatile_store(constants::PSET_1 as *mut u32, 1 << 15);
+      // Set pin to HIGH
+      gpio::pin_output_set(pin);
       // Wait arbitrary amount of time
-      util::noop500k();
-      // Set pin 15 to LOW
-      // PCLR_1 handles pins 32-53, we set bit 15 to 1 to clear this pin.
-      volatile_store(constants::PCLR_1 as *mut u32, 1 << 15);
+      for _ in 0..5000000 {
+        asm!("nop")
+      }
+      // Set pin to LOW
+      gpio::pin_output_clear(pin);
       // Wait arbitrary amount of time
-      util::noop500k();
+      for _ in 0..5000000 {
+        asm!("nop")
+      }
     }
   }
 }
