@@ -1,3 +1,4 @@
+// Copyright (c) 2022 Kārlis Čerņavskis, licensed under GNU AGPL v3.0
 // To keep this in the first portion of the binary.
 .section ".text.boot"
  

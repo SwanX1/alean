@@ -5,7 +5,7 @@ use core::arch::asm;
 /**
 * Execute NOP instruction 500k times
 */
-pub extern fn noop500k() -> () {
+pub fn noop500k() -> () {
   for _ in 1..500000 {
     unsafe {
       asm!("nop");
