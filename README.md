@@ -23,6 +23,11 @@ Module 1.
 3. Install [Arm GNU Toolchain](https://developer.arm.com/Tools%20and%20Software/GNU%20Toolchain)
    Add the installation path to your PATH environment variable. The installer adds it to the user's path, but put it in the system's path, because some programs might not find it.
 
+4. Clone the repository using Git *(`--recurse-submodules` is important!)*
+   ```
+   git clone --recurse-submodules --depth 1 https://github.com/SwanX1/alean.git
+   ```
+
 ### Compiling
 
 Compile using [`./build.ps1`](./build.ps1) (raw commands are in the [`build`](./build) file)<br>
@@ -35,7 +40,7 @@ It's as easy as pie! *(hehe get it?)*
 ### License
 This project is licensed under [GNU Affero General Public License v3.0](./LICENSE) for now.
 
-Files in the `firmware` directory (except `config.txt`) are under [Broadcom's license](./LICENSE.broadcom), as it is pre-compiled firmware to boot the Raspberry PI.<br>
-Firmware files are taken from the [raspberrypi/firmware](https://github.com/raspberrypi/firmware/tree/00feccb1dbfee286d3f1ce457c045effffbf90fc/boot) repository, branch `stable`, commit `00feccb1dbfee286d3f1ce457c045effffbf90fc`
+Files in the `firmware` directory are under [Broadcom's license](./LICENSE.broadcom), as it is pre-compiled firmware to boot the Raspberry PI.<br>
+Firmware files are taken from the [raspberrypi/firmware](https://github.com/raspberrypi/firmware) repository. View [SwanX1/alean-firmware](https://github.com/SwanX1/alean-firmware) for more information.
 
 If distributing ISO or any other archives containing this software, please make sure to include the license files in the archive as well.
