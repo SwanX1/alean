@@ -1,6 +1,8 @@
 // Copyright (c) 2022 Kārlis Čerņavskis, licensed under GNU AGPL v3.0
 use core::ptr::{read_volatile, write_volatile};
 
+#[allow(dead_code)] // These are utility functions, it's may or may not be used
+
 pub unsafe fn read_bit(addr: *mut u32, bit: u32) -> bool {
   let value = read_volatile(addr);
   let bit = (value >> bit) & 1;

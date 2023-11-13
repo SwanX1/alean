@@ -5,12 +5,14 @@
 // Make _start global.
 .globl _start
   .org 0x8000
+
 // Entry point for the kernel.
 // r15 -> should begin execution at 0x8000.
 // r0 -> 0x00000000
 // r1 -> 0x00000C42 - machine id
 // r2 -> 0x00000100 - start of ATAGS
 // preserve these registers as argument for kernel_main
+
 _start:
   // Setup the stack.
   mov sp, #0x8000
@@ -39,4 +41,4 @@ _start:
  
 // halt
 halt:
-  wfe
+  wfe // This works because we are the only core running.
