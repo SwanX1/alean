@@ -1,9 +1,5 @@
 name: Build Kernel
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -40,13 +36,59 @@ jobs:
       - name: Upload Full Image ZIP (with firmware)
         uses: actions/upload-artifact@v2
         with:
-          name: image-with-firmware
+          name: kernel-with-firmware
           path: |
             ./target/kernel.img
             ./firmware/start.elf
             ./firmware/fixup.dat
             ./firmware/bootcode.bin
             ./firmware/LICENCE.broadcom
-            
 
-      
+  release:
+    name: Publish Release
+    needs: build
+    if: success() && github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: kernel
+          path: kernel
+      - uses: actions/download-artifact@v3
+        with:
+          name: kernel-with-firmware
+          path: kernel-with-firmware
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Kernel
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./kernel/kernel.img
+          asset_name: kernel.img
+          asset_content_type: application/octet-stream
+
+      - name: Zip Kernel with Firmware
+        run: zip -r kernel-with-firmware.zip kernel-with-firmware
+
+      - name: Upload Kernel with Firmware
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./kernel-with-firmware.zip
+          asset_name: kernel-with-firmware.zip
+          asset_content_type: application/zip
