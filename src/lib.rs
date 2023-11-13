@@ -43,6 +43,7 @@ pub extern "C" fn kernel_main() -> ! {
 * yet. Currently, it just enters an infinite loop and waits for a manual reboot.
 */
 // TODO: When display output is coded, make sure panic outputs panic information.
+// ! You can ignore any errors that appear in IDE, we do not use std.
 #[panic_handler]
 pub extern "C" fn panic(_info: &PanicInfo) -> ! {
   loop {}
