@@ -6,11 +6,11 @@
 mod peripheral;
 mod util;
 
-use core::arch::asm;
 use core::panic::PanicInfo;
 
 use peripheral::drivers::gpio;
 use peripheral::drivers::gpio::constants::PinFunction;
+use peripheral::drivers::timer::util::wait_nanos;
 
 #[no_mangle]
 pub extern "C" fn kernel_main() -> ! {
@@ -24,16 +24,12 @@ pub extern "C" fn kernel_main() -> ! {
     loop {
       // Set pin to HIGH
       gpio::pin_output_set(pin);
-      // Wait arbitrary amount of time
-      for _ in 0..5000000 {
-        asm!("nop")
-      }
+      // Wait 1 second
+      wait_nanos(1_000_000);
       // Set pin to LOW
       gpio::pin_output_clear(pin);
-      // Wait arbitrary amount of time
-      for _ in 0..5000000 {
-        asm!("nop")
-      }
+      // Wait 1 second
+      wait_nanos(1_000_000);
     }
   }
 }

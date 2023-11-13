@@ -2,4 +2,5 @@
 pub mod drivers {
   pub mod constants;
   pub mod gpio;
+  pub mod timer;
 }
