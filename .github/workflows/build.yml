@@ -37,14 +37,16 @@ jobs:
           name: kernel
           path: ./target/kernel.img
 
-      - name: Create Full ZIP (with firmware)
-        run: |
-          zip image.zip ./target/kernel.img ./firmware/start.elf ./firmware/fixup.dat ./firmware/bootcode.bin ./firmware/LICENCE.broadcom
-      - name: Upload Image ZIP
+      - name: Upload Full Image ZIP (with firmware)
         uses: actions/upload-artifact@v2
         with:
           name: image-with-firmware
-          path: ./image.zip
-          
+          path: |
+            ./target/kernel.img
+            ./firmware/start.elf
+            ./firmware/fixup.dat
+            ./firmware/bootcode.bin
+            ./firmware/LICENCE.broadcom
+            
 
       
