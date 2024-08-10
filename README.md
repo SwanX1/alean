@@ -31,6 +31,10 @@ Compile using [`./build.ps1`](./build.ps1) (raw commands are in the [`build`](./
 The compiled files are in the `target` directory.
 
 To use this in a Raspberry PI, just format an SD card with a FAT32 partition (see [Raspberry Pi's documentation](https://www.raspberrypi.com/documentation/computers/getting-started.html#sd-cards)), place everything from [`firmware`](./firmware/) into that partition as well as the `kernel.img` file you've compiled.
+
+### Contact
+
+You may contact me about the project via e-mail: karliscern [at] gmail [dot] com.
 <!-- 
 ### Usage
 This project is meant for a specific setup (the ili9341 display, for example), however you can freely configure it in code. The constants in code are meant to be changed.<br>
