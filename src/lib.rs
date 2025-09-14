@@ -12,7 +12,7 @@ use peripheral::drivers::gpio;
 use peripheral::drivers::gpio::constants::PinFunction;
 use peripheral::drivers::timer::util::wait_nanos;
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn kernel_main() -> ! {
   let pin = 47;
   unsafe {

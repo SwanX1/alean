@@ -13,28 +13,27 @@ Module 1.
    rustup component add rust-src
    ```
 
-2. Install xargo
-   ```
-   cargo install xargo
-   ```
-
-3. Install [Arm GNU Toolchain](https://developer.arm.com/Tools%20and%20Software/GNU%20Toolchain)
+2. Install [Arm GNU Toolchain](https://developer.arm.com/Tools%20and%20Software/GNU%20Toolchain)
    Add the installation path to your PATH environment variable. The installer adds it to the user's path, but put it in the system's path, because some programs might not find it.
 
-4. Clone the repository using Git *(`--recurse-submodules` is important!)*
+3. Clone this repository using Git *(`--recurse-submodules` is important!)*
    ```
    git clone --recurse-submodules --depth 1 https://github.com/SwanX1/alean.git
    ```
+   
+    - Note: If you've cloned this repository without `--recurse-submodules`, you can run the following git commands to clone the `firmware` directory as well.
+     ```
+     git submodule init
+     git submodule update --depth=1
+     ```
 
 ### Compiling
-Compile using [`./build.ps1`](./build.ps1) (raw commands are in the [`build`](./build) file)<br>
-The compiled files are in the `target` directory.
+Compile using [`./build.sh`](./build.sh)
+The files needed on the SD card are in the `build` directory.
 
-To use this in a Raspberry PI, just format an SD card with a FAT32 partition (see [Raspberry Pi's documentation](https://www.raspberrypi.com/documentation/computers/getting-started.html#sd-cards)), place everything from [`firmware`](./firmware/) into that partition as well as the `kernel.img` file you've compiled.
-<!-- 
-### Usage
-This project is meant for a specific setup (the ili9341 display, for example), however you can freely configure it in code. The constants in code are meant to be changed.<br>
-Any specific setup for any component is in the [`docs`](./docs) directory. -->
+Note: If you're doing active development, run the script with a `--no-release` flag, which doesn't optimize the binary (along with Rust's STD).
+
+To use this in a Raspberry PI, just format an SD card with a FAT32 partition (see [Raspberry Pi's documentation](https://www.raspberrypi.com/documentation/computers/getting-started.html#sd-cards)), place everything from `build` into that partition. All files necessary for booting are also automatically copied into the `build` directory.
 
 It's as easy as pie! *(hehe get it?)*
 

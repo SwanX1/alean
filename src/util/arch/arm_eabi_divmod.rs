@@ -8,7 +8,7 @@ struct QR {
   r: u32,
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "system" fn __aeabi_uidiv(numerator: u32, denominator: u32) -> u32 {
   let qr = &mut QR { q: 0, r: 0 };
 
