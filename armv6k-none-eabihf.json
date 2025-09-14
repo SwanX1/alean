@@ -2,7 +2,7 @@
   "llvm-target": "armv6k-none-eabihf",
   "llvm-floatabi": "hard",
   "target-endian": "little",
-  "target-pointer-width": "32",
+  "target-pointer-width": 32,
   "target-c-int-width": 32,
   "os": "none",
   "env": "eabi",
