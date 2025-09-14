@@ -25,7 +25,7 @@ jobs:
 
       - name: Build Kernel
         run: |
-          bash ./build
+          bash ./build.sh
 
       - name: Upload Kernel
         uses: actions/upload-artifact@v2

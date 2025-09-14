@@ -49,3 +49,5 @@ fn division_qr(n: u32, p: u32, qr: &mut QR) -> () {
   qr.r = n;
   qr.q = q;
 }
+
+// TODO: implement other EABI functions as needed, like __aeabi_idivmod, __aeabi_idiv, etc.
