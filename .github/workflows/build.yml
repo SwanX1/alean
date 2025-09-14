@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
         with:
           submodules: 'recursive'
       - name: Configure Rustup
@@ -18,8 +18,7 @@ jobs:
           echo ::group::Rustup add rust-src
           rustup component add rust-src
           echo ::endgroup::
-      - name: Install Xargo
-        run: cargo install xargo
+
       - name: Install Arm GNU Toolchain (arm-none-eabi-gcc)
         uses: carlosperate/arm-none-eabi-gcc-action@v1
 
@@ -28,13 +27,13 @@ jobs:
           bash ./build.sh
 
       - name: Upload Kernel
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: kernel
           path: ./target/kernel.img
 
       - name: Upload Full Image ZIP (with firmware)
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: kernel-with-firmware
           path: |
@@ -50,18 +49,21 @@ jobs:
     if: success() && github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v5
         with:
           name: kernel
           path: kernel
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v5
         with:
           name: kernel-with-firmware
           path: kernel-with-firmware
 
+      - name: Zip Kernel with Firmware
+        run: zip -r kernel-with-firmware.zip kernel-with-firmware
+
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: ncipollo/release-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -69,26 +71,4 @@ jobs:
           release_name: ${{ github.ref }}
           draft: false
           prerelease: false
-
-      - name: Upload Kernel
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./kernel/kernel.img
-          asset_name: kernel.img
-          asset_content_type: application/octet-stream
-
-      - name: Zip Kernel with Firmware
-        run: zip -r kernel-with-firmware.zip kernel-with-firmware
-
-      - name: Upload Kernel with Firmware
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./kernel-with-firmware.zip
-          asset_name: kernel-with-firmware.zip
-          asset_content_type: application/zip
+          artifacts: "./kernel/kernel.img,kernel-with-firmware.zip"
