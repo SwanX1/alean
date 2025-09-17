@@ -2,6 +2,8 @@
 #![allow(dead_code)]
 #![allow(non_snake_case)]
 
+use crate::util::mem::Register;
+
 #[derive(Clone, Copy)]
 pub enum PinFunction {
   INPUT,
@@ -30,6 +32,8 @@ impl PinFunction {
   }
 }
 
+const BASE: u32 = 0x7E200000;
+
 /// Function Select 0 (pins 0-9)
 ///
 /// The function select registers are used to define the operation of the general-purpose I/O
@@ -38,7 +42,7 @@ impl PinFunction {
 /// The `FSEL{n}` field determines the functionality of the nth GPIO pin. All unused
 /// alternative function lines are tied to ground and will output a "0" if selected. All pins reset
 /// to normal GPIO input operation.
-pub const GPIO_FSEL0: *mut u32 = apply_mask!(0x7E200000);
+pub const GPIO_FSEL0: Register = Register::from_addr(BASE + 0x00);
 
 /// Function Select 1 (pins 10-19)
 ///
@@ -48,7 +52,7 @@ pub const GPIO_FSEL0: *mut u32 = apply_mask!(0x7E200000);
 /// The `FSEL{n}` field determines the functionality of the nth GPIO pin. All unused
 /// alternative function lines are tied to ground and will output a "0" if selected. All pins reset
 /// to normal GPIO input operation.
-pub const GPIO_FSEL1: *mut u32 = apply_mask!(0x7E200004);
+pub const GPIO_FSEL1: Register = Register::from_addr(BASE + 0x04);
 
 /// Function Select 2 (pins 20-29)
 ///
@@ -58,7 +62,7 @@ pub const GPIO_FSEL1: *mut u32 = apply_mask!(0x7E200004);
 /// The `FSEL{n}` field determines the functionality of the nth GPIO pin. All unused
 /// alternative function lines are tied to ground and will output a "0" if selected. All pins reset
 /// to normal GPIO input operation.
-pub const GPIO_FSEL2: *mut u32 = apply_mask!(0x7E200008);
+pub const GPIO_FSEL2: Register = Register::from_addr(BASE + 0x08);
 
 /// Function Select 3 (pins 30-39)
 ///
@@ -68,7 +72,7 @@ pub const GPIO_FSEL2: *mut u32 = apply_mask!(0x7E200008);
 /// The `FSEL{n}` field determines the functionality of the nth GPIO pin. All unused
 /// alternative function lines are tied to ground and will output a "0" if selected. All pins reset
 /// to normal GPIO input operation.
-pub const GPIO_FSEL3: *mut u32 = apply_mask!(0x7E20000C);
+pub const GPIO_FSEL3: Register = Register::from_addr(BASE + 0x0C);
 
 /// Function Select 4 (pins 40-49)
 ///
@@ -78,7 +82,7 @@ pub const GPIO_FSEL3: *mut u32 = apply_mask!(0x7E20000C);
 /// The `FSEL{n}` field determines the functionality of the nth GPIO pin. All unused
 /// alternative function lines are tied to ground and will output a "0" if selected. All pins reset
 /// to normal GPIO input operation.
-pub const GPIO_FSEL4: *mut u32 = apply_mask!(0x7E200010);
+pub const GPIO_FSEL4: Register = Register::from_addr(BASE + 0x10);
 
 /// Function Select 5 (pins 50-59)
 ///
@@ -88,7 +92,7 @@ pub const GPIO_FSEL4: *mut u32 = apply_mask!(0x7E200010);
 /// The `FSEL{n}` field determines the functionality of the nth GPIO pin. All unused
 /// alternative function lines are tied to ground and will output a "0" if selected. All pins reset
 /// to normal GPIO input operation.
-pub const GPIO_FSEL5: *mut u32 = apply_mask!(0x7E200014);
+pub const GPIO_FSEL5: Register = Register::from_addr(BASE + 0x14);
 
 /// Pin Output Set 0 (pins 0-31)
 ///
@@ -101,7 +105,7 @@ pub const GPIO_FSEL5: *mut u32 = apply_mask!(0x7E200014);
 /// However, if the pin is subsequently defined as an output then the bit will be set
 /// according to the last set/clear operation. Separating the set and clear functions
 /// removes the need for read-modify-write operations
-pub const GPIO_SET0: *mut u32 = apply_mask!(0x7E20001C);
+pub const GPIO_SET0: Register = Register::from_addr(BASE + 0x1C);
 
 /// Pin Output Set 1 (pins 32-53)
 ///
@@ -114,7 +118,7 @@ pub const GPIO_SET0: *mut u32 = apply_mask!(0x7E20001C);
 /// However, if the pin is subsequently defined as an output then the bit will be set
 /// according to the last set/clear operation. Separating the set and clear functions
 /// removes the need for read-modify-write operations
-pub const GPIO_SET1: *mut u32 = apply_mask!(0x7E200020);
+pub const GPIO_SET1: Register = Register::from_addr(BASE + 0x20);
 
 /// Pin Output Clear 0 (pins 0-31)
 ///
@@ -124,7 +128,7 @@ pub const GPIO_SET1: *mut u32 = apply_mask!(0x7E200020);
 /// ignored. However, if the pin is subsequently defined as an output then the bit will
 /// be set according to the last set/clear operation. Separating the set and clear
 /// functions removes the need for read-modify-write operations.
-pub const GPIO_CLR0: *mut u32 = apply_mask!(0x7E200028);
+pub const GPIO_CLR0: Register = Register::from_addr(BASE + 0x28);
 
 /// Pin Output Clear 1 (pins 32-53)
 ///
@@ -134,50 +138,50 @@ pub const GPIO_CLR0: *mut u32 = apply_mask!(0x7E200028);
 /// ignored. However, if the pin is subsequently defined as an output then the bit will
 /// be set according to the last set/clear operation. Separating the set and clear
 /// functions removes the need for read-modify-write operations.
-pub const GPIO_CLR1: *mut u32 = apply_mask!(0x7E20002C);
+pub const GPIO_CLR1: Register = Register::from_addr(BASE + 0x2C);
 /// Pin Level 0 (pins 0-31)
 ///
 /// The pin level registers return the actual value of the pin. The LEV{n} field gives the
 /// value of the respective GPIO pin.
-pub const GPIO_LEV0: *mut u32 = apply_mask!(0x7E200034);
+pub const GPIO_LEV0: Register = Register::from_addr(BASE + 0x34);
 /// Pin Level 1 (pins 32-53)
 ///
 /// The pin level registers return the actual value of the pin. The LEV{n} field gives the
 /// value of the respective GPIO pin.
-pub const GPIO_LEV1: *mut u32 = apply_mask!(0x7E200038);
+pub const GPIO_LEV1: Register = Register::from_addr(BASE + 0x38);
 
 // TODO: Document constants below
 /// Pin Event Detect Status 0
-pub const GPIO_EDS0: *mut u32 = apply_mask!(0x7E200040);
+pub const GPIO_EDS0: Register = Register::from_addr(BASE + 0x40);
 /// Pin Event Detect Status 1
-pub const GPIO_EDS1: *mut u32 = apply_mask!(0x7E200044);
+pub const GPIO_EDS1: Register = Register::from_addr(BASE + 0x44);
 /// Pin Rising Edge Detect Enable 0
-pub const GPIO_REN0: *mut u32 = apply_mask!(0x7E20004C);
+pub const GPIO_REN0: Register = Register::from_addr(BASE + 0x4C);
 /// Pin Rising Edge Detect Enable 1
-pub const GPIO_REN1: *mut u32 = apply_mask!(0x7E200050);
+pub const GPIO_REN1: Register = Register::from_addr(BASE + 0x50);
 /// Pin Falling Edge Detect Enable 0
-pub const GPIO_FEN0: *mut u32 = apply_mask!(0x7E200058);
+pub const GPIO_FEN0: Register = Register::from_addr(BASE + 0x58);
 /// Pin Falling Edge Detect Enable 1
-pub const GPIO_FEN1: *mut u32 = apply_mask!(0x7E20005C);
+pub const GPIO_FEN1: Register = Register::from_addr(BASE + 0x5C);
 /// Pin High Detect Enable 0
-pub const GPIO_HEN0: *mut u32 = apply_mask!(0x7E200064);
+pub const GPIO_HEN0: Register = Register::from_addr(BASE + 0x64);
 /// Pin High Detect Enable 1
-pub const GPIO_HEN1: *mut u32 = apply_mask!(0x7E200068);
+pub const GPIO_HEN1: Register = Register::from_addr(BASE + 0x68);
 /// Pin Low Detect Enable 0
-pub const GPIO_LEN0: *mut u32 = apply_mask!(0x7E200070);
+pub const GPIO_LEN0: Register = Register::from_addr(BASE + 0x70);
 /// Pin Low Detect Enable 1
-pub const GPIO_LEN1: *mut u32 = apply_mask!(0x7E200074);
+pub const GPIO_LEN1: Register = Register::from_addr(BASE + 0x74);
 /// Pin Async. Rising Edge Detect 0
-pub const GPIO_AREN0: *mut u32 = apply_mask!(0x7E20007C);
+pub const GPIO_AREN0: Register = Register::from_addr(BASE + 0x7C);
 /// Pin Async. Rising Edge Detect 1
-pub const GPIO_AREN1: *mut u32 = apply_mask!(0x7E200080);
+pub const GPIO_AREN1: Register = Register::from_addr(BASE + 0x80);
 /// Pin Async. Falling Edge Detect 0
-pub const GPIO_AFEN0: *mut u32 = apply_mask!(0x7E200088);
+pub const GPIO_AFEN0: Register = Register::from_addr(BASE + 0x88);
 /// Pin Async. Falling Edge Detect 1
-pub const GPIO_AFEN1: *mut u32 = apply_mask!(0x7E20008C);
+pub const GPIO_AFEN1: Register = Register::from_addr(BASE + 0x8C);
 /// Pin Pull-up/down Enable
-pub const GPIO_PUD: *mut u32 = apply_mask!(0x7E200094);
+pub const GPIO_PUD: Register = Register::from_addr(BASE + 0x94);
 /// Pin Pull-up/down Enable Clock 0
-pub const GPIO_PUDCLK0: *mut u32 = apply_mask!(0x7E200098);
+pub const GPIO_PUDCLK0: Register = Register::from_addr(BASE + 0x98);
 /// Pin Pull-up/down Enable Clock 1
-pub const GPIO_PUDCLK1: *mut u32 = apply_mask!(0x7E20009C);
+pub const GPIO_PUDCLK1: Register = Register::from_addr(BASE + 0x9C);

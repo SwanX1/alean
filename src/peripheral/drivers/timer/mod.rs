@@ -1,13 +1,13 @@
 #![allow(dead_code)]
 
-use core::ptr::{read_volatile, write_volatile};
+use crate::util::mem::Register;
 
 pub mod constants;
 pub mod util;
 
 // u8 - corresponds to which timer (0-3)
 // *mut u32 - corresponds to the compare register for that timer
-pub struct Timer(u8, *mut u32);
+pub struct Timer(u8, Register);
 
 pub const TIMER0: Timer = Timer(0, constants::TIMER_C0);
 pub const TIMER1: Timer = Timer(1, constants::TIMER_C1);
@@ -17,12 +17,12 @@ pub const TIMER3: Timer = Timer(3, constants::TIMER_C3);
 impl Timer {
   #[inline]
   pub fn set_compare(&self, value: u32) {
-    unsafe { write_volatile(self.1, value) }
+    self.1.write(value);
   }
 
   #[inline]
   pub fn get_compare(&self) -> u32 {
-    unsafe { read_volatile(self.1) }
+    self.1.read()
   }
 
   #[inline]
@@ -33,24 +33,23 @@ impl Timer {
 
   #[inline]
   pub fn has_triggered(&self) -> bool {
-    let cs = unsafe { read_volatile(constants::TIMER_CS) };
-    (cs & (1 << self.0)) != 0
+    constants::TIMER_CS.read_bit(self.0 as u32)
   }
 
   #[inline]
   pub fn clear_interrupt(&self) {
-    unsafe { write_volatile(constants::TIMER_CS, 1 << self.0) }
+    constants::TIMER_CS.write_bit(self.0 as u32, 1);
   }
 }
 
 #[inline]
 pub fn timer_counter_lower() -> u32 {
-  unsafe { read_volatile(constants::TIMER_CLO) }
+  constants::TIMER_CLO.read()
 }
 
 #[inline]
 pub fn timer_counter_higher() -> u32 {
-  unsafe { read_volatile(constants::TIMER_CHI) }
+  constants::TIMER_CHI.read()
 }
 
 #[inline]

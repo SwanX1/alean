@@ -1,6 +1,7 @@
+use core::hint::unlikely;
 #[allow(dead_code)]
 
-use core::{hint::{self, unreachable_unchecked}, ptr::{read_volatile, write_volatile}};
+use core::hint::{self, unreachable_unchecked};
 
 pub mod constants;
 
@@ -19,23 +20,24 @@ pub struct SpiControlStatus {
 }
 
 impl SpiControlStatus {
-  fn set_bit(&mut self, bit: usize, value: bool) {
+  fn set_bit(&mut self, bit: u32, value: bool) {
     if bit > 31 {
-
+      // SAFETY: We can never reach this point because the public methods that set bits
+      // only set bits <= 31 (see [constants::pins]).
       unsafe { unreachable_unchecked() };
     }
     if self.unfinished_operation.is_none() {
       self.unfinished_operation = Some([None; 32]);
     }
     if let Some(ref mut ops) = self.unfinished_operation {
-      ops[bit as usize] = Some(value);
+      // SAFETY: We have already checked that bit <= 31.
+      *unsafe { ops.get_unchecked_mut(bit as usize) } = Some(value);
     }
   }
 
   pub fn apply(&mut self) {
     if let Some(ops) = self.unfinished_operation {
-      // SAFETY: This is a virtual register, so we can read and write it safely.
-      let mut reg_value = unsafe { read_volatile(constants::SPI_CS) };
+      let mut reg_value = constants::SPI_CS.read();
       for (bit, bit_op) in ops.iter().enumerate() {
         if let Some(bit_value) = bit_op {
           if bit >= 26 || (16..=20).contains(&bit) {
@@ -51,7 +53,7 @@ impl SpiControlStatus {
         }
       }
       // SAFETY: This is a virtual register, so we can read and write it safely.
-      unsafe { write_volatile(constants::SPI_CS, reg_value) };
+      constants::SPI_CS.write(reg_value);
       self.unfinished_operation = None;
     }
   }
@@ -154,65 +156,57 @@ impl SpiControlStatus {
   }
 
   pub fn rx_fifo_full(&self) -> bool {
-    // SAFETY: This is a virtual register, so we can read and write it safely.
-    let reg_value = unsafe { read_volatile(constants::SPI_CS) };
-    (reg_value & (1 << constants::pins::CS_RXF)) != 0
+    constants::SPI_CS.read_bit(constants::pins::CS_RXF)
   }
 
   pub fn rx_fifo_needs_reading(&self) -> bool {
-    // SAFETY: This is a virtual register, so we can read and write it safely.
-    let reg_value = unsafe { read_volatile(constants::SPI_CS) };
-    (reg_value & (1 << constants::pins::CS_RXR)) != 0
+    constants::SPI_CS.read_bit(constants::pins::CS_RXR)
   }
 
   pub fn tx_fifo_can_accept_data(&self) -> bool {
-    // SAFETY: This is a virtual register, so we can read and write it safely.
-    let reg_value = unsafe { read_volatile(constants::SPI_CS) };
-    (reg_value & (1 << constants::pins::CS_TXD)) != 0
+    constants::SPI_CS.read_bit(constants::pins::CS_TXD)
   }
   pub fn rx_fifo_contains_data(&self) -> bool {
-    // SAFETY: This is a virtual register, so we can read and write it safely.
-    let reg_value = unsafe { read_volatile(constants::SPI_CS) };
-    (reg_value & (1 << constants::pins::CS_RXD)) != 0
+    constants::SPI_CS.read_bit(constants::pins::CS_RXD)
   }
   pub fn transfer_done(&self) -> bool {
-    // SAFETY: This is a virtual register, so we can read and write it safely.
-    let reg_value = unsafe { read_volatile(constants::SPI_CS) };
-    (reg_value & (1 << constants::pins::CS_DONE)) != 0
+    constants::SPI_CS.read_bit(constants::pins::CS_DONE)
   }
 }
 
+#[inline(always)]
 pub fn write_tx(data: u8) {
-  // SAFETY: This is a virtual register, so we can read and write it safely.
-  unsafe { write_volatile(hint::black_box(constants::SPI_FIFO), data as u32) };
+  constants::SPI_FIFO.write(data as u32);
 }
 
+#[inline(always)]
 pub fn write_tx_long(data: u32) {
-  // SAFETY: This is a virtual register, so we can read and write it safely.
-  unsafe { write_volatile(hint::black_box(constants::SPI_FIFO), data) };
+  constants::SPI_FIFO.write(data);
 }
 
+#[inline(always)]
 pub fn read_rx() -> u8 {
-  // Black box used here, since reading from the FIFO has side effects (removes data from FIFO).
-  // SAFETY: This is a virtual register, so we can read and write it safely.
-  (hint::black_box(unsafe { read_volatile(constants::SPI_FIFO) }) & 0xFF) as u8
+  // // Black box used here, since reading from the FIFO has side effects (removes data from FIFO).
+  (hint::black_box(constants::SPI_FIFO.read()) & 0xFF) as u8
 }
 
+#[inline(always)]
 pub fn read_rx_long() -> u32 {
   // Black box used here, since reading from the FIFO has side effects (removes data from FIFO).
-  // SAFETY: This is a virtual register, so we can read and write it safely.
-  unsafe { read_volatile(constants::SPI_FIFO) }
+  hint::black_box(constants::SPI_FIFO.read())
 }
 
+#[inline] // not always
 pub fn set_cdiv(div: u16) {
-  if (div < 2 && div != 0) || div % 2 != 0 {
-    panic!("Clock divider must be an even number >= 2");
+  // Must be a power of 2, between 2 and 65536 inclusive.
+  if unlikely(div < 2 || div > 65536 || (div & (div - 1)) != 0) {
+    panic!("Clock divider must be a power of 2 between 2 and 65536 inclusive");
   }
-  // SAFETY: This is a virtual register, so we can read and write it safely.
-  unsafe { write_volatile(constants::SPI_CLK, (div & 0xFFFF) as u32) };
+  constants::SPI_CLK.write((div & 0xFFFF) as u32);
 }
 
+
+#[inline(always)]
 pub fn set_dlen(len: u16) {
-  // SAFETY: This is a virtual register, so we can read and write it safely.
-  unsafe { write_volatile(constants::SPI_DLEN, (len & 0xFFFF) as u32) };
+  constants::SPI_DLEN.write((len & 0xFFFF) as u32);
 }

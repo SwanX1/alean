@@ -1,21 +1,23 @@
 #![allow(dead_code)]
 
+use crate::util::mem::Register;
+
 const BASE: u32 = 0x7E003000;
 
 /// System Timer Control/Status
-pub const TIMER_CS: *mut u32 = apply_mask!(BASE + 0x00);
+pub const TIMER_CS: Register = Register::from_addr(BASE + 0x00);
 /// System Timer Counter Lower 32 bits
-pub const TIMER_CLO: *mut u32 = apply_mask!(BASE + 0x04);
+pub const TIMER_CLO: Register = Register::from_addr(BASE + 0x04);
 /// System Timer Counter Higher 32 bits
-pub const TIMER_CHI: *mut u32 = apply_mask!(BASE + 0x08);
+pub const TIMER_CHI: Register = Register::from_addr(BASE + 0x08);
 /// System Timer Compare 0
-pub const TIMER_C0: *mut u32 = apply_mask!(BASE + 0x0C);
+pub const TIMER_C0: Register = Register::from_addr(BASE + 0x0C);
 /// System Timer Compare 1
-pub const TIMER_C1: *mut u32 = apply_mask!(BASE + 0x10);
+pub const TIMER_C1: Register = Register::from_addr(BASE + 0x10);
 /// System Timer Compare 2
-pub const TIMER_C2: *mut u32 = apply_mask!(BASE + 0x14);
+pub const TIMER_C2: Register = Register::from_addr(BASE + 0x14);
 /// System Timer Compare 3
-pub const TIMER_C3: *mut u32 = apply_mask!(BASE + 0x18);
+pub const TIMER_C3: Register = Register::from_addr(BASE + 0x18);
 
 // Where did I get these from? These are not in the BCM2835 ARM Peripherals doc.
 // pub const TIMER_LOAD: *mut u32 = apply_mask!(0x7E003000);

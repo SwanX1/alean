@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Kārlis Čerņavskis, licensed under GNU AGPL v3.0
 #![no_main]
 #![no_std]
+#![feature(likely_unlikely)]
 
 mod peripheral;
 mod util;
