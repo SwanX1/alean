@@ -36,10 +36,10 @@ pub fn panic(_info: &PanicInfo) -> ! {
     // Set pin to HIGH
     gpio::pin_output_set(ACT_LED);
     // Wait 1 second
-    wait_nanos(1e9);
+    wait_nanos(1_000_000_000);
     // Set pin to LOW
     gpio::pin_output_clear(ACT_LED);
     // Wait 1 second
-    wait_nanos(1e9);
+    wait_nanos(1_000_000_000);
   }
 }
