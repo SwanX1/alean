@@ -1,3 +1,5 @@
+// TODO: Clean this up, reorganize module
+
 // Purpose: Implements the __aeabi_uidivmod function for ARM EABI targets.
 
 // struct qr - stores qutient/remainder to handle divmod EABI interfaces.

@@ -1,6 +1,5 @@
 // Copyright (c) 2025 Kārlis Čerņavskis, licensed under GNU AGPL v3.0
-#![allow(dead_code)]
-#![allow(non_snake_case)]
+#![allow(unused, reason = "Constants may be unused, they should be declared regardless of usage.")]
 
 use crate::util::mem::Register;
 

@@ -1,14 +1,13 @@
-#[allow(dead_code)] // These are utility functions, they may or may not be used
-
 // Copyright (c) 2025 Kārlis Čerņavskis, licensed under GNU AGPL v3.0
-use core::ptr::{read_volatile, write_volatile};
+#[allow(unused, reason = "These are utility functions, they may or may not be used")]
 
+use core::ptr::{read_volatile, write_volatile};
 
 /// Read a specific bit from a memory-mapped register
 /// Caller must ensure that the address is valid and aligned.
 #[inline]
 pub unsafe fn read_bit<T: Into<*const u32>>(addr: T, bit: u32) -> bool {
-  /// SAFETY: Caller has already ensured that the address is valid and aligned.
+  // SAFETY: Caller has already ensured that the address is valid and aligned.
   let value = unsafe { read_volatile(addr.into()) };
   let bit = value & (1 << bit);
   return bit != 0;
@@ -18,11 +17,11 @@ pub unsafe fn read_bit<T: Into<*const u32>>(addr: T, bit: u32) -> bool {
 /// Caller must ensure that the address is valid and aligned.
 #[inline]
 pub unsafe fn write_bit<T: Into<*mut u32> + Copy>(addr: T, bit: u32, bit_value: u32) -> () {
-  /// SAFETY: Caller has already ensured that the address is valid and aligned.
+  // SAFETY: Caller has already ensured that the address is valid and aligned.
   let mut value = unsafe { read_volatile(addr.into()) };
   // We use (bit_value & 1) here to guard against a non 0/1 bit_value
   value = (value & !(1 << bit)) | ((bit_value & 1) << bit);
-  /// SAFETY: See above.
+  // SAFETY: See above.
   unsafe { write_volatile(addr.into(), value) };
 }
 

@@ -6,8 +6,6 @@
 mod peripheral;
 mod util;
 
-use core::panic::PanicInfo;
-
 use peripheral::drivers::gpio;
 use peripheral::drivers::gpio::constants::PinFunction;
 use peripheral::drivers::timer::util::wait_nanos;
@@ -19,14 +17,11 @@ pub extern "C" fn kernel_main() -> ! {
   panic!("No kernel implementation yet");
 }
 
-/**
-* Panic handler doesn't attempt to log any information, due to no actual means to do so
-* yet. Currently, it just enters an infinite loop and waits for a manual reboot.
-*/
-// TODO: When display output is coded, make sure panic outputs panic information.
-// ! You can ignore any errors that appear in IDE, we do not use std.
+// Panic handler doesn't attempt to log any information, due to no actual means to do so
+// yet. Currently, it just enters an infinite loop and waits for a manual reboot.
+// #[no_mangle] in case we use this in any future assembly code.
 #[panic_handler]
-pub fn panic(_info: &PanicInfo) -> ! {
+pub fn kernel_panic(_info: &core::panic::PanicInfo) -> ! {
   // Spin loop
 
   // Set pin 47 to output

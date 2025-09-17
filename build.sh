@@ -5,12 +5,10 @@
 # Use WSL2 (Windows Subsystem for Linux) instead, or a Linux VM to run this script.
 # If you know what you're doing, you can try to run the commands manually in PowerShell or CMD.
 # The main commands here are:
-#   RUST_TARGET_PATH="C:\path\to\this\repo" cargo +nightly build -Zbuild-std=core,compiler_builtins --target armv6k-none-eabihf $RELEASE_FLAG
+#   cargo +nightly build
 #   arm-none-eabi-gcc -mcpu=arm1176jzf-s -fpic -ffreestanding -c src/boot.s -o target/boot.o
 #   arm-none-eabi-gcc -T linker.ld -o target/kernel.elf -z noexecstack -ffreestanding -O2 -nostdlib target/boot.o target/armv6k-none-eabihf/release/libalean.rlib
 #   arm-none-eabi-objcopy target/kernel.elf -O binary target/kernel.img
-# Replace "C:\path\to\this\repo" with the actual path to this repository on your system.
-# This is a workaround, because cargo doesn't pass this environment variable to rustc. See: https://github.com/japaric/xargo/issues/44#issuecomment-324730919
 
 # Shortcircuit if any command fails
 set -e
@@ -51,7 +49,7 @@ do
 done
 
 # Build the kernel
-RUST_TARGET_PATH=$(pwd) cargo +nightly build -Zbuild-std=core,compiler_builtins --target armv6k-none-eabihf $RELEASE_FLAG
+cargo +nightly build $RELEASE_FLAG
 
 # Compile the boot assembly
 arm-none-eabi-gcc -mcpu=arm1176jzf-s -fpic -ffreestanding -c src/boot.s -o target/boot.o

@@ -1,4 +1,5 @@
-#![allow(dead_code)]
+// Copyright (c) 2025 Kārlis Čerņavskis, licensed under GNU AGPL v3.0
+#![allow(unused, reason = "This module may be unused, as it is providing peripheral functionality that may not be used anywhere")]
 
 use crate::util::mem::Register;
 
