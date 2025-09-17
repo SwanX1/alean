@@ -196,12 +196,8 @@ pub fn read_rx_long() -> u32 {
   hint::black_box(constants::SPI_FIFO.read())
 }
 
-#[inline] // not always
+#[inline(always)]
 pub fn set_cdiv(div: u16) {
-  // Must be a power of 2, between 2 and 65536 inclusive.
-  if unlikely(div < 2 || div > 65536 || (div & (div - 1)) != 0) {
-    panic!("Clock divider must be a power of 2 between 2 and 65536 inclusive");
-  }
   constants::SPI_CLK.write((div & 0xFFFF) as u32);
 }
 
