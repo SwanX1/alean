@@ -3,4 +3,5 @@ pub mod drivers {
   pub mod gpio;
   pub mod timer;
   pub mod spi;
+  pub mod uart;
 }

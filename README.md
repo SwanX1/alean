@@ -35,6 +35,14 @@ Note: If you're doing active development, run the script with a `--no-release` f
 
 To use this in a Raspberry PI, just format an SD card with a FAT32 partition (see [Raspberry Pi's documentation](https://www.raspberrypi.com/documentation/computers/getting-started.html#sd-cards)), place everything from `build` into that partition. All files necessary for booting are also automatically copied into the `build` directory.
 
+To use this in QEMU - additionally to the setup before, follow the following steps.
+1. Install [QEMU](https://qemu.org)
+   This installation varies for different operating systems, so follow [QEMU's installation instructions](https://www.qemu.org/download/), and make sure to install a "full system emulation" package, if provided. It should install a `qemu-system-arm` command.
+2. Run using the following command
+   ```
+   qemu-system-arm -machine raspi0 -cpu arm1176 -m 512 -kernel ./target/kernel.elf -serial stdio
+   ```
+
 It's as easy as pie! *(hehe get it?)*
 
 ### License
