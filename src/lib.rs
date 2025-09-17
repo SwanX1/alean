@@ -11,25 +11,11 @@ use peripheral::drivers::gpio;
 use peripheral::drivers::gpio::constants::PinFunction;
 use peripheral::drivers::timer::util::wait_nanos;
 
+const ACT_LED: u32 = 47;
+
 #[unsafe(no_mangle)]
 pub extern "C" fn kernel_main() -> ! {
-  let pin = 47;
-  
-  // Set pin 47 to output
-  // FSEL_4 handles pins 40-49, pin 47 uses bits 21-23.
-  // Enabling the first bit (21st bit in the actual value) sets the pin function to output.
-  gpio::pin_function_set(pin, PinFunction::OUTPUT);
-
-  loop {
-    // Set pin to HIGH
-    gpio::pin_output_set(pin);
-    // Wait 1 second
-    wait_nanos(1_000_000);
-    // Set pin to LOW
-    gpio::pin_output_clear(pin);
-    // Wait 1 second
-    wait_nanos(1_000_000);
-  }
+  panic!("No kernel implementation yet");
 }
 
 /**
@@ -40,5 +26,19 @@ pub extern "C" fn kernel_main() -> ! {
 // ! You can ignore any errors that appear in IDE, we do not use std.
 #[panic_handler]
 pub fn panic(_info: &PanicInfo) -> ! {
-  loop {}
+  // Spin loop
+
+  // Set pin 47 to output
+  gpio::pin_function_set(ACT_LED, PinFunction::OUTPUT);
+
+  loop {
+    // Set pin to HIGH
+    gpio::pin_output_set(ACT_LED);
+    // Wait 1 second
+    wait_nanos(1e9);
+    // Set pin to LOW
+    gpio::pin_output_clear(ACT_LED);
+    // Wait 1 second
+    wait_nanos(1e9);
+  }
 }
