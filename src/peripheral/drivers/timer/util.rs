@@ -1,10 +1,11 @@
-use core::hint;
+use core::hint::spin_loop;
 
-use super::timer_value;
+use super::timer_counter_lower;
 
 pub fn wait_nanos(nanos: u32) {
-  let start: u32 = timer_value();
-  while timer_value() < (start + nanos) {
-    hint::spin_loop()
+  let target = timer_counter_lower().wrapping_add(nanos);
+  while timer_counter_lower() < target {
+    spin_loop();
   }
 }
+ 

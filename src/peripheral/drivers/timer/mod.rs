@@ -2,70 +2,58 @@
 
 use core::ptr::{read_volatile, write_volatile};
 
-// TODO: THIS IS NOT FINISHED YET, DO NOT USE IT
-
-// TODO: Check safety for writing. Is it safe to write any value at any time? Until then, all write functions are unsafe.
-// SAFETY: Reading from these virtual addresses is always safe, no restrictions on caller.
-
 pub mod constants;
 pub mod util;
 
-// Load a value into the ARM Timer's Load register
-#[inline]
-pub unsafe fn timer_load(val: u32) {
-  unsafe { write_volatile(constants::TIMER_LOAD, val) };
+// u8 - corresponds to which timer (0-3)
+// *mut u32 - corresponds to the compare register for that timer
+pub struct Timer(u8, *mut u32);
+
+pub const TIMER0: Timer = Timer(0, constants::TIMER_C0);
+pub const TIMER1: Timer = Timer(1, constants::TIMER_C1);
+pub const TIMER2: Timer = Timer(2, constants::TIMER_C2);
+pub const TIMER3: Timer = Timer(3, constants::TIMER_C3);
+
+impl Timer {
+  #[inline]
+  pub fn set_compare(&self, value: u32) {
+    unsafe { write_volatile(self.1, value) }
+  }
+
+  #[inline]
+  pub fn get_compare(&self) -> u32 {
+    unsafe { read_volatile(self.1) }
+  }
+
+  #[inline]
+  pub fn set_compare_from_now(&self, offset: u32) {
+    let now = timer_counter_lower();
+    self.set_compare(now.wrapping_add(offset));
+  }
+
+  #[inline]
+  pub fn has_triggered(&self) -> bool {
+    let cs = unsafe { read_volatile(constants::TIMER_CS) };
+    (cs & (1 << self.0)) != 0
+  }
+
+  #[inline]
+  pub fn clear_interrupt(&self) {
+    unsafe { write_volatile(constants::TIMER_CS, 1 << self.0) }
+  }
 }
 
-// Read the ARM Timer's Value register
 #[inline]
-pub fn timer_value() -> u32 {
-  return unsafe { read_volatile(constants::TIMER_VALUE) };
+pub fn timer_counter_lower() -> u32 {
+  unsafe { read_volatile(constants::TIMER_CLO) }
 }
 
-// Read the ARM Timer's Control register
 #[inline]
-pub fn timer_control() -> u32 {
-  return unsafe { read_volatile(constants::TIMER_CONTROL) };
+pub fn timer_counter_higher() -> u32 {
+  unsafe { read_volatile(constants::TIMER_CHI) }
 }
 
-// Write a value to the ARM Timer's Control register
 #[inline]
-pub unsafe fn set_timer_control(val: u32) {
-  unsafe { write_volatile(constants::TIMER_CONTROL, val) };
-}
-
-// Clear the ARM Timer's Interrupt Request (IRQ) register
-#[inline]
-pub fn clear_timer_irq() {
-  unsafe { write_volatile(constants::TIMER_IRQ_CLR, 0) };
-}
-
-// Read the ARM Timer's Raw IRQ register
-#[inline]
-pub fn timer_raw_irq() -> u32 {
-  return unsafe { read_volatile(constants::TIMER_RAW_IRQ) };
-}
-
-// Read the ARM Timer's Masked IRQ register
-#[inline]
-pub fn timer_masked_irq() -> u32 {
-  return unsafe { read_volatile(constants::TIMER_MASKED_IRQ) };
-}
-
-// Write a value to the ARM Timer's Reload register
-#[inline]
-pub unsafe fn set_timer_reload(val: u32) {
-  unsafe { write_volatile(constants::TIMER_RELOAD, val) };
-}
-
-// Write a value to the ARM Timer's pre-divider register
-#[inline]
-pub unsafe fn set_timer_predivider(val: u32) {
-  unsafe { write_volatile(constants::TIMER_PREDIVIDER, val) };
-}
-
-// Read the ARM Timer's Free Running Counter register
-#[inline]
-pub fn timer_free_running_counter() -> u32 {
-  return unsafe { read_volatile(constants::TIMER_FREE_RUNNING_COUNTER) };
+pub fn timer_counter() -> u64 {
+  ((timer_counter_higher() as u64) << 32) | timer_counter_lower() as u64
 }

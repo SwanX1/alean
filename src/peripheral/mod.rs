@@ -10,4 +10,5 @@ macro_rules! apply_mask {
 pub mod drivers {
   pub mod gpio;
   pub mod timer;
+  pub mod spi;
 }
