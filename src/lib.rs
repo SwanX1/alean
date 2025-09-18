@@ -10,14 +10,15 @@ use peripheral::drivers::gpio;
 use peripheral::drivers::gpio::constants::PinFunction;
 use peripheral::drivers::timer::util::wait_nanos;
 
-use crate::peripheral::drivers::uart::{uart_set_fifo, uart_read, uart_read_blocking, uart_write, uart_write_str};
+use crate::peripheral::drivers::uart::{uart_read_blocking, uart_set_fifo, uart_write, uart_write_str};
 
-const ACT_LED: u32 = 47;
+core::arch::global_asm!(include_str!("boot.s"), options(raw));
 
 #[unsafe(no_mangle)]
 pub extern "C" fn kernel_main() -> ! {
   uart_set_fifo(true);
   uart_write_str("No kernel implementation yet\n");
+  uart_write_str("Entering loopback mode. Type something and it will be echoed back.\n");
   loop {
     // Loopback
     let c = uart_read_blocking().data();
@@ -28,9 +29,9 @@ pub extern "C" fn kernel_main() -> ! {
   }
 }
 
-// Panic handler doesn't attempt to log any information, due to no actual means to do so
-// yet. Currently, it just enters an infinite loop and waits for a manual reboot.
-// #[no_mangle] in case we use this in any future assembly code.
+const ACT_LED: u32 = 47;
+
+// TODO: Log panic info, disable core feature `panic_immediate_abort`
 #[panic_handler]
 pub fn kernel_panic(_info: &core::panic::PanicInfo) -> ! {
   // Spin loop

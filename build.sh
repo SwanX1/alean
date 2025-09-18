@@ -51,11 +51,8 @@ done
 # Build the kernel
 cargo +nightly build $RELEASE_FLAG
 
-# Compile the boot assembly
-arm-none-eabi-gcc -mcpu=arm1176jzf-s -fpic -ffreestanding -c src/boot.s -o target/boot.o
-
 # Link the kernel and boot files into a single ELF
-arm-none-eabi-gcc -T linker.ld -o target/kernel.elf -z noexecstack -ffreestanding -O2 -nostdlib target/boot.o target/armv6k-none-eabihf/release/libalean.rlib
+arm-none-eabi-gcc -T linker.ld -o target/kernel.elf -z noexecstack -ffreestanding -O2 -nostdlib target/armv6k-none-eabihf/release/libalean.rlib
 
 # Convert the ELF to a binary image
 arm-none-eabi-objcopy target/kernel.elf -O binary target/kernel.img

@@ -1,6 +1,6 @@
 {
   "rust-analyzer.cargo.allTargets": false,
-  "rust-analyzer.cargo.target": "armv6k-none-eabihf",
-  "rust-analyzer.check.targets": "armv6k-none-eabihf",
-  "rust-analyzer.cargo.extraArgs": ["-Zbuild-std=core,compiler_builtins"],
+  "rust-analyzer.cargo.target": "armv6k-none-eabihf.json",
+  "rust-analyzer.check.targets": "armv6k-none-eabihf.json",
+  "rust-analyzer.cargo.extraArgs": ["-Zbuild-std=core,compiler_builtins", "-Zbuild-std-features=compiler-builtins-mem", "--target=armv6k-none-eabihf.json"],
 }

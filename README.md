@@ -40,8 +40,9 @@ To use this in QEMU - additionally to the setup before, follow the following ste
    This installation varies for different operating systems, so follow [QEMU's installation instructions](https://www.qemu.org/download/), and make sure to install a "full system emulation" package, if provided. It should install a `qemu-system-arm` command.
 2. Run using the following command
    ```
-   qemu-system-arm -machine raspi0 -cpu arm1176 -m 512 -kernel ./target/kernel.elf -serial stdio
+   qemu-system-arm -machine raspi0 -cpu arm1176 -m 512 -kernel ./target/kernel.elf -nographic
    ```
+   Note: `CTRL+C` (SIGINT) gets passed to the emulated machine. You can terminate QEMU using `CTRL+A X`
 
 It's as easy as pie! *(hehe get it?)*
 

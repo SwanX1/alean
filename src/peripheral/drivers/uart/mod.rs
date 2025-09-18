@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Kārlis Čerņavskis, licensed under GNU AGPL v3.0
+#![allow(unused, reason = "This module may be unused, as it is providing peripheral functionality that may not be used anywhere")]
+
 pub mod constants;
 
 #[inline(always)]
@@ -84,6 +87,7 @@ pub fn uart_write_str(s: &str) {
   }
 }
 
+// TODO: Make this interrupt-driven
 #[inline(always)]
 pub fn uart_read_blocking() -> UartData {
   // Wait until something is in the buffer

@@ -4,6 +4,7 @@ use core::hint::spin_loop;
 
 use super::timer_counter_lower;
 
+// TODO: Make this interrupt-driven
 #[allow(unused, reason = "This function may be unused as it is a utility function")]
 pub fn wait_nanos(nanos: u32) {
   let target = timer_counter_lower().wrapping_add(nanos);
