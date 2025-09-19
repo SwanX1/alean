@@ -5,6 +5,8 @@
 
 mod peripheral;
 mod util;
+mod exceptions;
+mod syscall;
 
 use peripheral::drivers::gpio;
 use peripheral::drivers::gpio::constants::PinFunction;
@@ -18,6 +20,10 @@ core::arch::global_asm!(include_str!("boot.s"), options(raw));
 pub extern "C" fn kernel_main() -> ! {
   uart_set_fifo(true);
   uart_write_str("No kernel implementation yet\n");
+  uart_write_str("Testing syscall. You should see a \"HANDLING SYSCALL\" message below.\n");
+
+  unsafe { syscall::syscall0(42); }
+
   uart_write_str("Entering loopback mode. Type something and it will be echoed back.\n");
   loop {
     // Loopback
