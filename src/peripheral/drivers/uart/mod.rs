@@ -80,11 +80,17 @@ pub fn uart_write(data: u8) {
 #[inline(always)]
 pub fn uart_write_str(s: &str) {
   for &b in s.as_bytes() {
-    // Wait until we can send
-    while uart_transmit_fifo_full() {}
     // Send the byte
-    uart_write(b);
+    uart_write_byte(b);
   }
+}
+
+#[inline(always)]
+pub fn uart_write_byte(b: u8) {
+  // Wait until we can send
+  while uart_transmit_fifo_full() {}
+  // Send the byte
+  uart_write(b);
 }
 
 // TODO: Make this interrupt-driven

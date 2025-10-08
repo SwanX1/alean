@@ -5,6 +5,7 @@
 
 mod peripheral;
 mod util;
+mod shell;
 
 use peripheral::drivers::gpio;
 use peripheral::drivers::gpio::constants::PinFunction;
@@ -18,6 +19,7 @@ core::arch::global_asm!(include_str!("boot.s"), options(raw));
 pub extern "C" fn kernel_main() -> ! {
   uart_set_fifo(true);
   uart_write_str("No kernel implementation yet\n");
+  shell::shell_main();
   uart_write_str("Shutting down.\n");
 
   watchdog::power_off();
