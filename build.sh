@@ -40,10 +40,12 @@ fi
 
 # Check for --no-release flag
 RELEASE_FLAG="--release"
+BUILD_TYPE="release"
 for arg in "$@"
 do
     if [ "$arg" == "--no-release" ]; then
         RELEASE_FLAG=""
+        BUILD_TYPE="debug"
     fi
 done
 
@@ -51,7 +53,7 @@ done
 cargo +nightly build $RELEASE_FLAG
 
 # Link the kernel and boot files into a single ELF
-arm-none-eabi-gcc -T linker.ld -o target/kernel.elf -z noexecstack -ffreestanding -O2 -nostdlib target/armv6k-none-eabihf/release/libalean.a
+arm-none-eabi-gcc -T linker.ld -o target/kernel.elf -z noexecstack -ffreestanding -O2 -nostdlib target/armv6k-none-eabihf/$BUILD_TYPE/libalean.a
 
 # Convert the ELF to a binary image
 arm-none-eabi-objcopy target/kernel.elf -O binary target/kernel.img
