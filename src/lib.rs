@@ -3,6 +3,7 @@
 #![no_std]
 #![feature(likely_unlikely)]
 
+mod alloc;
 mod peripheral;
 mod util;
 mod shell;
