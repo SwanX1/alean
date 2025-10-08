@@ -12,7 +12,7 @@ use peripheral::drivers::gpio;
 use peripheral::drivers::gpio::constants::PinFunction;
 use peripheral::drivers::timer::util::wait_nanos;
 
-use crate::peripheral::drivers::uart::{uart_read_blocking, uart_set_fifo, uart_write, uart_write_str};
+use crate::peripheral::drivers::{uart::{uart_set_fifo, uart_write_str}, watchdog};
 
 core::arch::global_asm!(include_str!("boot.s"), options(raw));
 
@@ -24,15 +24,9 @@ pub extern "C" fn kernel_main() -> ! {
 
   unsafe { syscall::syscall0(42); }
 
-  uart_write_str("Entering loopback mode. Type something and it will be echoed back.\n");
-  loop {
-    // Loopback
-    let c = uart_read_blocking().data();
-    uart_write(c);
-    if c == b'\r' {
-      uart_write(b'\n');
-    }
-  }
+  uart_write_str("Shutting down.\n");
+
+  watchdog::power_off();
 }
 
 const ACT_LED: u32 = 47;
