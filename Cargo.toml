@@ -1,15 +1,20 @@
+cargo-features = ["panic-immediate-abort"]
+
 [package]
 name = "alean"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+crate-type = ["staticlib"]
+
 [dependencies]
 
 [profile.dev]
-panic = "abort"
+panic = "immediate-abort" # You may ignore any IDE errors for this, as it's a valid value in nightly
 
 [profile.release]
-panic = "abort"
+panic = "immediate-abort" # You may ignore any IDE errors for this, as it's a valid value in nightly
 debug = false
 opt-level = 3
 strip = "symbols"

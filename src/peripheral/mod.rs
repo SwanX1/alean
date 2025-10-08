@@ -4,4 +4,5 @@ pub mod drivers {
   pub mod timer;
   pub mod spi;
   pub mod uart;
+  pub mod watchdog;
 }
