@@ -42,6 +42,16 @@ impl UartData {
   }
 
   #[inline(always)]
+  pub fn has_error(&self) -> bool {
+    self.0 & (
+      (1 << 11) | // overrun
+      (1 << 10) | // break
+      (1 << 9)  | // parity
+      (1 << 8)    // framing
+    ) != 0
+  }
+
+  #[inline(always)]
   pub fn overrun_error(&self) -> bool {
     self.0 & (1 << 11) != 0
   }
