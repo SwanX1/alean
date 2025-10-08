@@ -23,27 +23,23 @@ impl ArbitraryPtr {
   pub const fn as_ptr(&self) -> *mut u8 {
     self.0
   }
+}
 
-  pub const fn is_null(&self) -> bool {
-    self.0.is_null()
+impl From<ArbitraryPtr> for *mut u8 {
+  fn from(ptr: ArbitraryPtr) -> *mut u8 {
+    ptr.0
   }
 }
 
-impl Into<*mut u8> for ArbitraryPtr {
-  fn into(self) -> *mut u8 {
-    self.0
+impl From<ArbitraryPtr> for *const u8 {
+  fn from(ptr: ArbitraryPtr) -> *const u8 {
+    ptr.0 as *const u8
   }
 }
 
-impl Into<*const u8> for ArbitraryPtr {
-  fn into(self) -> *const u8 {
-    self.0 as *const u8
-  }
-}
-
-impl Into<usize> for ArbitraryPtr {
-  fn into(self) -> usize {
-    self.0 as usize
+impl From<ArbitraryPtr> for usize {
+  fn from(ptr: ArbitraryPtr) -> usize {
+    ptr.0 as usize
   }
 }
 
@@ -69,7 +65,7 @@ impl Add<usize> for ArbitraryPtr {
   type Output = Self;
 
   fn add(self, rhs: usize) -> Self::Output {
-    Self((self.0 as usize + rhs) as *mut u8)
+    Self(self.0.wrapping_byte_add(rhs))
   }
 }
 
@@ -77,7 +73,7 @@ impl Add<ArbitraryPtr> for ArbitraryPtr {
   type Output = Self;
 
   fn add(self, rhs: ArbitraryPtr) -> Self::Output {
-    Self((self.0 as usize + rhs.0 as usize) as *mut u8)
+    Self(self.0.wrapping_byte_add(rhs.0 as usize))
   }
 }
 
@@ -85,7 +81,7 @@ impl Sub<usize> for ArbitraryPtr {
   type Output = Self;
 
   fn sub(self, rhs: usize) -> Self::Output {
-    Self((self.0 as usize - rhs) as *mut u8)
+    Self(self.0.wrapping_byte_sub(rhs))
   }
 }
 
@@ -93,7 +89,7 @@ impl Sub<ArbitraryPtr> for ArbitraryPtr {
   type Output = Self;
 
   fn sub(self, rhs: ArbitraryPtr) -> Self::Output {
-    Self((self.0 as usize - rhs.0 as usize) as *mut u8)
+    Self(self.0.wrapping_byte_sub(rhs.0 as usize))
   }
 }
 

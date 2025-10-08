@@ -13,6 +13,19 @@ const fn kernel_end() -> usize {
   (kernel_end + 0xFFF) & !0xFFF
 }
 
+/// Memory-Mapped I/O (MMIO) region start address for BCM2835.
+/// This region should never be used for heap allocations.
+const MMIO_START: usize = 0x2000_0000;
+
+/// Address just after the MMIO region (0x2000_0000 to 0x20FF_FFFF) where allocations can resume.
+const MMIO_SKIP_TO: usize = 0x2100_0000;
+
+/// Maximum memory address for allocations.
+/// This should ideally be determined dynamically based on available RAM.
+const MEMORY_CAP: usize = 0x4000_0000;
+
+/// The maximum number of blocks that can be allocated simultaneously.
+/// Once this limit is reached, further allocations will fail.
 const ALLOCATOR_BLOCKS: usize = 1024;
 
 #[global_allocator]
@@ -21,6 +34,7 @@ static mut GLOBAL_ALLOCATOR_STATE: GlobalAllocatorState = GlobalAllocatorState {
   allocated_blocks: [const { None }; ALLOCATOR_BLOCKS],
 };
 
+/// Represents a single allocated memory block tracked by the allocator.
 #[derive(Clone)]
 struct AllocatedBlock {
   ptr: ArbitraryPtr,
@@ -35,21 +49,43 @@ impl AllocatedBlock {
     }
   }
   
+  /// Checks if this block overlaps with a memory region defined by ptr and size.
   fn overlaps(&self, ptr: ArbitraryPtr, size: usize) -> bool {
     let start = self.ptr;
     let end = start + self.size;
-    let target_start = ptr.into();
+    let target_start = ptr;
     let target_end = target_start + size;
     !(target_end <= start || end <= target_start)
   }
 }
 
+/// Internal state for the global allocator.
+/// This is a static mutable and should only be accessed within the GlobalAllocator implementation.
 struct GlobalAllocatorState {
   allocated_blocks: [Option<AllocatedBlock>; ALLOCATOR_BLOCKS],
 }
+
+/// A simple bump allocator with a free list for the kernel.
+/// 
+/// This allocator maintains a list of allocated blocks and searches for free
+/// memory regions by scanning through allocated blocks. It automatically skips
+/// the MMIO region used by hardware peripherals.
 pub struct GlobalAllocator;
 
 impl GlobalAllocator {
+  /// Find the index of an allocated block by its pointer and size
+  fn find_block_index(&self, ptr: ArbitraryPtr, size: usize) -> Option<usize> {
+    #[allow(static_mut_refs)] // SAFETY: We are the only ones accessing GLOBAL_ALLOCATOR_STATE here
+    for (index, block_option) in unsafe { GLOBAL_ALLOCATOR_STATE.allocated_blocks.iter().enumerate() } {
+      if let Some(block) = block_option {
+        if block.ptr == ptr && block.size == size {
+          return Some(index);
+        }
+      }
+    }
+    None
+  }
+
   fn find_free_block(&self, layout: Layout) -> Option<ArbitraryPtr> {
     // Start searching from the end of the kernel memory
     let mut current_address: ArbitraryPtr = (kernel_end() + 1).into();
@@ -58,22 +94,17 @@ impl GlobalAllocator {
       // Align to alignment requirement
       current_address = (current_address + layout.align() - 1usize) & !(layout.align() - 1);
       
-      // Memory cap arbitrary here
-      // TODO: Find a better memory cap here
-      if current_address + layout.size() > 0x4000_0000usize.into() {
+      // Check if we've exceeded the memory cap
+      if current_address + layout.size() > MEMORY_CAP.into() {
         return None;
       }
       
-      // Check for overlap in MMIO range (0x2000_0000 to 0x20FF_FFFF)
-      if 0x2000_0000usize <= current_address.into() && current_address <= 0x20FF_FFFF.into() {
-        continue;
-      }
-      
-      if 0x2000_0000usize <= (current_address + layout.size()).into() && (current_address + layout.size()) <= 0x20FF_FFFF.into() {
-        continue;
-      }
-      
-      if current_address <= 0x2000_0000.into() && 0x20FF_FFFFusize <= (current_address + layout.size()).into() {
+      // Check for overlap in MMIO range
+      // If current block would overlap with MMIO, skip to after MMIO range
+      let current_end = current_address + layout.size();
+      if usize::from(current_address) < MMIO_SKIP_TO && usize::from(current_end) > MMIO_START {
+        // Overlaps with MMIO range, skip to after it
+        current_address = MMIO_SKIP_TO.into();
         continue;
       }
 
@@ -136,37 +167,23 @@ unsafe impl GlobalAlloc for GlobalAllocator {
           return addr;
         }
       }
-      addr
+      // No free slots available - return null instead of invalid pointer
+      core::ptr::null_mut()
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: core::alloc::Layout) {
       // Find the block and mark it as free
       let target_ptr: ArbitraryPtr = ptr.into();
-      #[allow(static_mut_refs)] // SAFETY: We are the only ones accessing GLOBAL_ALLOCATOR_STATE here
-      for block_option in unsafe { GLOBAL_ALLOCATOR_STATE.allocated_blocks.iter_mut() } {
-        if let Some(block) = block_option {
-          if block.ptr == target_ptr && block.size == layout.size() {
-            *block_option = None;
-            return;
-          }
-        }
+      if let Some(index) = self.find_block_index(target_ptr, layout.size()) {
+        #[allow(static_mut_refs)] // SAFETY: We are the only ones accessing GLOBAL_ALLOCATOR_STATE here
+        unsafe { GLOBAL_ALLOCATOR_STATE.allocated_blocks[index] = None };
       }
     }
 
     unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
-      // Check if the current block can accommodate the new size
+      // Find the current block
       let current_ptr: ArbitraryPtr = ptr.into();
-      let mut found_block_index: Option<usize> = None;
-      #[allow(static_mut_refs)] // SAFETY: We are the only ones accessing GLOBAL_ALLOCATOR_STATE here
-      for (index, block_option) in unsafe { GLOBAL_ALLOCATOR_STATE.allocated_blocks.iter().enumerate() } {
-        if let Some(block) = block_option {
-          if block.ptr == current_ptr && block.size == layout.size() {
-            found_block_index = Some(index);
-            break;
-          }
-        }
-      }
-      let block_index = match found_block_index {
+      let block_index = match self.find_block_index(current_ptr, layout.size()) {
         Some(i) => i,
         None => {
           // Block not found, cannot realloc
@@ -186,18 +203,31 @@ unsafe impl GlobalAlloc for GlobalAllocator {
 
       // Check if we can extend the current block
       let next_address = block.ptr + block.size;
+      let extension_size = new_size - block.size;
       let can_extend = {
-        // Check for overlap with other blocks
+        // Check for overlap with other blocks and MMIO
         let mut can_extend = true;
-        #[allow(static_mut_refs)] // SAFETY: We are the only ones accessing GLOBAL_ALLOCATOR_STATE here
-        for (index, other_block_option) in unsafe { GLOBAL_ALLOCATOR_STATE.allocated_blocks.iter().enumerate() } {
-          if index == block_index {
-            continue;
-          }
-          if let Some(other_block) = other_block_option {
-            if other_block.ptr < next_address + (new_size - block.size) && next_address < other_block.ptr + other_block.size {
-              can_extend = false;
-              break;
+        
+        // Check MMIO range overlap
+        let extended_end = next_address + extension_size;
+        if usize::from(next_address) < MMIO_SKIP_TO && usize::from(extended_end) > MMIO_START {
+          can_extend = false;
+        }
+        
+        // Check for overlap with other allocated blocks
+        if can_extend {
+          #[allow(static_mut_refs)] // SAFETY: We are the only ones accessing GLOBAL_ALLOCATOR_STATE here
+          for (index, other_block_option) in unsafe { GLOBAL_ALLOCATOR_STATE.allocated_blocks.iter().enumerate() } {
+            if index == block_index {
+              continue;
+            }
+            if let Some(other_block) = other_block_option {
+              // Check if extension would overlap with this block
+              let extension_end = next_address + extension_size;
+              if next_address < other_block.ptr + other_block.size && extension_end > other_block.ptr {
+                can_extend = false;
+                break;
+              }
             }
           }
         }
