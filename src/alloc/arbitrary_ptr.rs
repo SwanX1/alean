@@ -1,7 +1,7 @@
-use core::ops::{Add, BitAnd, BitOr, Sub};
+use core::{alloc::Layout, ops::{Add, BitAnd, BitOr, Sub}, ptr::NonNull};
 
-/// Represents a pointer to an arbitrary memory location.
-/// This type is a thin wrapper around a raw pointer (`*mut u8`),
+/// Represents a pointer to an arbitrary non-null memory location.
+/// This type is a thin wrapper around a raw pointer (`NonNull<()>`),
 /// providing basic pointer arithmetic and conversions.
 /// 
 /// This type is primarily intended for "this is an address" semantics,
@@ -14,50 +14,52 @@ use core::ops::{Add, BitAnd, BitOr, Sub};
 /// including invalid or unallocated memory.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]
-pub(in crate::alloc) struct ArbitraryPtr(*mut u8);
+pub(in crate::alloc) struct ArbitraryPtr(NonNull<()>);
 impl ArbitraryPtr {
-  pub const fn new(ptr: *mut u8) -> Self {
-    Self(ptr)
+  pub const fn new(ptr: *mut ()) -> Self {
+    // SAFETY: Caller must ensure that ptr is non-null.
+    debug_assert!(!ptr.is_null());
+    unsafe { Self::new_unchecked(ptr) }
   }
 
-  pub const fn as_ptr(&self) -> *mut u8 {
+  /// SAFETY: Caller must ensure that `ptr` is non-null.
+  pub const unsafe fn new_unchecked(ptr: *mut ()) -> Self {
+    Self(unsafe { NonNull::new_unchecked(ptr) })
+  }
+
+  pub const fn as_ptr(&self) -> NonNull<()> {
     self.0
   }
-}
 
-impl From<ArbitraryPtr> for *mut u8 {
-  fn from(ptr: ArbitraryPtr) -> *mut u8 {
-    ptr.0
+  /// Aligns the pointer to the specified layout's alignment.
+  #[inline]
+  pub fn align(&self, layout: Layout) -> Self {
+    let mut new_ptr = Self(self.0);
+    new_ptr.align_in_place(layout);
+    new_ptr
   }
-}
-
-impl From<ArbitraryPtr> for *const u8 {
-  fn from(ptr: ArbitraryPtr) -> *const u8 {
-    ptr.0 as *const u8
+  
+  pub fn align_in_place(&mut self, layout: Layout) -> () {
+    let align = layout.align();
+    let addr = self.0.as_ptr() as usize;
+    let aligned_addr = (addr + align - 1) & !(align - 1);
+    // SAFETY: aligned_addr is guaranteed to be non-null because align is a power of two
+    self.0 = unsafe { NonNull::new_unchecked(aligned_addr as *mut ()) };
   }
 }
 
 impl From<ArbitraryPtr> for usize {
   fn from(ptr: ArbitraryPtr) -> usize {
-    ptr.0 as usize
-  }
-}
-
-impl From<*mut u8> for ArbitraryPtr {
-  fn from(ptr: *mut u8) -> Self {
-    Self(ptr)
-  }
-}
-
-impl From<*const u8> for ArbitraryPtr {
-  fn from(ptr: *const u8) -> Self {
-    Self(ptr as *mut u8)
+    ptr.0.as_ptr() as usize
   }
 }
 
 impl From<usize> for ArbitraryPtr {
   fn from(addr: usize) -> Self {
-    Self(addr as *mut u8)
+    // SAFETY: addr is assumed to be a valid address, but we cannot guarantee it's non-null.
+    // The caller must ensure that addr is non-zero.
+    debug_assert!(addr != 0);
+    unsafe { Self::new_unchecked(addr as *mut ()) }
   }
 }
 
@@ -65,7 +67,7 @@ impl Add<usize> for ArbitraryPtr {
   type Output = Self;
 
   fn add(self, rhs: usize) -> Self::Output {
-    Self(self.0.wrapping_byte_add(rhs))
+    (Into::<usize>::into(self) + rhs).into()
   }
 }
 
@@ -73,7 +75,7 @@ impl Add<ArbitraryPtr> for ArbitraryPtr {
   type Output = Self;
 
   fn add(self, rhs: ArbitraryPtr) -> Self::Output {
-    Self(self.0.wrapping_byte_add(rhs.0 as usize))
+    (self + Into::<usize>::into(rhs)).into()
   }
 }
 
@@ -81,7 +83,7 @@ impl Sub<usize> for ArbitraryPtr {
   type Output = Self;
 
   fn sub(self, rhs: usize) -> Self::Output {
-    Self(self.0.wrapping_byte_sub(rhs))
+    (Into::<usize>::into(self) - rhs).into()
   }
 }
 
@@ -89,7 +91,7 @@ impl Sub<ArbitraryPtr> for ArbitraryPtr {
   type Output = Self;
 
   fn sub(self, rhs: ArbitraryPtr) -> Self::Output {
-    Self(self.0.wrapping_byte_sub(rhs.0 as usize))
+    (self - Into::<usize>::into(rhs)).into()
   }
 }
 
@@ -97,7 +99,15 @@ impl BitAnd<usize> for ArbitraryPtr {
   type Output = Self;
 
   fn bitand(self, rhs: usize) -> Self::Output {
-    Self((self.0 as usize & rhs) as *mut u8)
+    (Into::<usize>::into(self) & rhs).into()
+  }
+}
+
+impl BitAnd<ArbitraryPtr> for ArbitraryPtr {
+  type Output = Self;
+
+  fn bitand(self, rhs: ArbitraryPtr) -> Self::Output {
+    (self & Into::<usize>::into(rhs)).into()
   }
 }
 
@@ -105,7 +115,15 @@ impl BitOr<usize> for ArbitraryPtr {
   type Output = Self;
 
   fn bitor(self, rhs: usize) -> Self::Output {
-    Self((self.0 as usize | rhs) as *mut u8)
+    (Into::<usize>::into(self) | rhs).into()
+  }
+}
+
+impl BitOr<ArbitraryPtr> for ArbitraryPtr {
+  type Output = Self;
+
+  fn bitor(self, rhs: ArbitraryPtr) -> Self::Output {
+    (self | Into::<usize>::into(rhs)).into()
   }
 }
 
