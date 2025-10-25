@@ -1,4 +1,4 @@
-use core::{alloc::{GlobalAlloc, Layout}, ptr::NonNull};
+use core::{alloc::{GlobalAlloc, Layout}, cell::UnsafeCell, ptr::NonNull};
 
 use crate::alloc::arbitrary_ptr::ArbitraryPtr;
 
@@ -26,6 +26,11 @@ const MEMORY_CAP: usize = 0x4000_0000;
 
 /// The amount of regions to allocate space for when expanding the regions array.
 const ALLOCATOR_REGION_INCREASE: usize = 1024;
+
+// Sanity checks. Compile-time assertions, doesn't create any extra runtime code.
+const _: () = assert!(ALLOCATOR_REGION_INCREASE > 0, "ALLOCATOR_REGION_INCREASE must be non-zero and positive");
+const _: () = assert!(MEMORY_CAP > MMIO_SKIP_TO, "MEMORY_CAP must be greater than MMIO_SKIP_TO");
+const _: () = assert!(MMIO_SKIP_TO > MMIO_START, "MMIO_SKIP_TO must be after MMIO_START");
 
 #[derive(Clone)]
 struct Region {
@@ -407,17 +412,26 @@ impl Allocator {
 
 
 #[global_allocator]
-static ALLOC_WRAPPER: AllocWrapper = AllocWrapper;
-// SAFETY: This is only called once, here.
-static mut GLOBAL_ALLOCATOR: Allocator = unsafe { Allocator::new() };
+static ALLOC_WRAPPER: AllocWrapper = AllocWrapper(UnsafeCell::new(unsafe {Allocator::new()}));
 
-struct AllocWrapper;
+#[repr(transparent)]
+struct AllocWrapper(UnsafeCell<Allocator>);
+unsafe impl Sync for AllocWrapper {}
+
+impl AllocWrapper {
+  fn get(&self) -> &mut Allocator {
+    // SAFETY: Global allocator is only accessed through this wrapper,
+    // so mutable access is safe.
+    // UnsafeCell allows for interior mutability.
+    unsafe { &mut *self.0.get() }
+  }
+}
 
 unsafe impl GlobalAlloc for AllocWrapper {
+  
   unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
-    #[allow(static_mut_refs)]
-    unsafe { GLOBAL_ALLOCATOR.allocate(layout) }
-    .map_or(core::ptr::null_mut(), |ptr| ptr.as_ptr().as_ptr() as *mut u8)
+    self.get().allocate(layout)
+      .map_or(core::ptr::null_mut(), |ptr| ptr.as_ptr().as_ptr() as *mut u8)
   }
   
   unsafe fn dealloc(&self, ptr: *mut u8, _layout: core::alloc::Layout) {
@@ -425,8 +439,8 @@ unsafe impl GlobalAlloc for AllocWrapper {
       return;
     }
     let arbitrary_ptr = unsafe { ArbitraryPtr::new_unchecked(ptr as *mut ()) };
-    #[allow(static_mut_refs)]
-    unsafe { GLOBAL_ALLOCATOR.deallocate(arbitrary_ptr) };
+
+    self.get().deallocate(arbitrary_ptr);
   }
   
   unsafe fn realloc(
@@ -440,8 +454,7 @@ unsafe impl GlobalAlloc for AllocWrapper {
       return unsafe { self.alloc(Layout::from_size_align_unchecked(new_size, old_layout.align())) };
     }
     let arbitrary_ptr = unsafe { ArbitraryPtr::new_unchecked(ptr as *mut ()) };
-    #[allow(static_mut_refs)]
-    let new_ptr = unsafe { GLOBAL_ALLOCATOR.reallocate(arbitrary_ptr, new_size) };
+    let new_ptr = self.get().reallocate(arbitrary_ptr, new_size);
     new_ptr.map_or(core::ptr::null_mut(), |p| p.as_ptr().as_ptr() as *mut u8)
   }
 }
